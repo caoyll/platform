@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="
+    http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans-4.3.xsd
+    http://www.springframework.org/schema/context
+    http://www.springframework.org/schema/context/spring-context-4.3.xsd
+    http://www.springframework.org/schema/tx 
+    http://www.springframework.org/schema/tx/spring-tx-4.3.xsd">
+
+	<bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="locations" value="classpath:datasource.properties" />
+	</bean>
+	<!-- 数据库配置 -->
+	<bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource"
+		init-method="init" destroy-method="close">
+		<property name="driverClassName" value="${jdbc.driver}" />
+		<property name="url" value="${jdbc.url}" />
+		<property name="username" value="${jdbc.username}" />
+		<property name="password" value="${jdbc.password}" />
+		<!-- 配置初始化大小、最小、最大 -->
+		<property name="initialSize" value="${jdbc.initialSize}" />
+		<property name="minIdle" value="${jdbc.minIdle}" />
+		<property name="maxActive" value="${jdbc.maxActive}" />
+		<!-- 配置获取连接等待超时的时间 -->
+		<property name="maxWait" value="${jdbc.maxWait}" />
+		<!-- 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒 -->
+		<property name="timeBetweenEvictionRunsMillis" value="${jdbc.timeBetweenEvictionRunsMillis}" />
+		<!-- 配置一个连接在池中最小生存的时间，单位是毫秒 -->
+		<property name="minEvictableIdleTimeMillis" value="${jdbc.minEvictableIdleTimeMillis}" />
+		<property name="testWhileIdle" value="${jdbc.testWhileIdle}" />
+		<!-- 这里建议配置为TRUE，防止取到的连接不可用 -->
+		<property name="testOnBorrow" value="true" />
+		<property name="testOnReturn" value="false" />
+		<!-- 打开PSCache，并且指定每个连接上PSCache的大小 -->
+		<property name="poolPreparedStatements" value="true" />
+		<property name="maxPoolPreparedStatementPerConnectionSize" value="20" />
+
+		<!-- 这里配置提交方式，默认就是TRUE，可以不用配置 -->
+		<property name="defaultAutoCommit" value="true" />
+
+		<!-- 验证连接有效与否的SQL，不同的数据配置不同 -->
+		<property name="validationQuery" value="${jdbc.validationQuery}" />
+		<property name="filters" value="stat" />
+	</bean>
+	<!-- Mybatis配置信息 -->
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<!-- 指定mybatis-config.xml -->
+		<property name="configLocation" value="classpath:mybatis-config.xml"/>
+		<!-- 指定实体类包 -->
+		<property name="typeAliasesPackage" value="classpath:*/*entity/*.java"/>
+		<!-- 指定dao层对应的sql配置 -->
+		<property name="mapperLocations" value="classpath:*/*mapper/*.xml" />  
+	</bean>
+	<!-- 扫描basePackage下标识的 接口-->
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="com.cy" />
+	</bean>
+	<!--  使用annotation 自动注册bean,并检查@Required,@Autowired,@Resource的属性已被注入  -->
+	<context:component-scan base-package="com.cy.service" />
+	<!-- 事务管理 -->
+	<bean id="txManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource"></property>
+	</bean>
+	<tx:annotation-driven transaction-manager="txManager" />
+	<!-- 开启注解配置 -->
+	<context:annotation-config />
+</beans>
